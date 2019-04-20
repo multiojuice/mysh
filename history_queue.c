@@ -25,6 +25,19 @@ void hq_free_node(History_Queue hq) {
 }
 
 
+char *hq_find_command(History_Queue hq, long index) {
+    History_Queue curr = hq;
+
+    while(curr != NULL) {
+        History_Queue next = curr->next;
+        if (curr->current_index == index) {
+            return curr->command;
+        }
+        curr = next;
+    }
+}
+
+
 History_Queue hq_add(History_Queue hq, char *command) {
     History_Queue new_hq = hq_create(hq->max_size, hq->last->current_index + 1, command);
 

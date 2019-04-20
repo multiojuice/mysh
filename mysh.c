@@ -12,12 +12,29 @@ int mysh_history(History_Queue hq) {
 }
 
 
+int mysh_bang(History_Queue hq, long num) {
+    long low_index = hq->current_index;
+    long high_index = hq->last->current_index;
+    if(num >= low_index && num < high_index) {
+        handle_command(hq, hq_find_command(hq, num));
+    }
+    //TODO Handle this error somewhere, it is that the command isnt availble
+    return -1;
+}
+
+
 int handle_command(History_Queue hq, char *command) {
     char *token = strtok(command, " ");
+    int status = 0;
     if (!strcmp("history", token)) {
-        return mysh_history(hq);
+        status = mysh_history(hq);
     }
-
+    else if (token[0] == '!') {
+        long num = strtol(token+1, NULL, 10); 
+        status = mysh_bang(hq, num);
+    } else {
+        printf("Not too sure about %s\n", token);
+    }
 }
 
 
