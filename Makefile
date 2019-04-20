@@ -1,5 +1,5 @@
 #
-# Created by gmakemake (Ubuntu Jul 25 2014) on Sat Apr 20 11:43:07 2019
+# Created by gmakemake (Ubuntu Jul 25 2014) on Sat Apr 20 15:29:02 2019
 #
 
 #
@@ -50,13 +50,13 @@ CCLIBFLAGS =
 
 
 CPP_FILES =	
-C_FILES =	mysh.c
+C_FILES =	history_queue.c mysh.c trimit.c
 PS_FILES =	
 S_FILES =	
-H_FILES =	
+H_FILES =	history_queue.h trimit.h
 SOURCEFILES =	$(H_FILES) $(CPP_FILES) $(C_FILES) $(S_FILES)
 .PRECIOUS:	$(SOURCEFILES)
-OBJFILES =	
+OBJFILES =	history_queue.o trimit.o 
 
 #
 # Main targets
@@ -71,7 +71,9 @@ mysh:	mysh.o $(OBJFILES)
 # Dependencies
 #
 
-mysh.o:	
+history_queue.o:	history_queue.h
+mysh.o:	history_queue.h trimit.h
+trimit.o:	trimit.h
 
 #
 # Housekeeping
