@@ -1,4 +1,6 @@
 *.swp
 *.o
 mysh
+a.out
+*.gch
 
