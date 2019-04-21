@@ -1,5 +1,6 @@
 #include <stdio.h> // printf
 #include <string.h> //strtok, strcmp
+#include <sys/wait.h> // wait
 #include <sys/types.h> // pid
 #include <unistd.h> // exec, fork
 #include "trimit.h" // trim function
@@ -23,6 +24,17 @@ int mysh_bang(History_Queue hq, long num) {
 }
 
 
+int mysh_external(int argc, char *argv[]) {
+    pid_t pid = fork();
+
+    if(pid == 0) {
+        execlp(argv[0], argv[0], argv[1], (char *)NULL);
+    } else {
+        wait(NULL);
+    }
+}
+
+
 int handle_command(History_Queue hq, char *command) {
     char *token = strtok(command, " ");
     int status = 0;
@@ -34,6 +46,10 @@ int handle_command(History_Queue hq, char *command) {
         status = mysh_bang(hq, num);
     } else {
         printf("Not too sure about %s\n", token);
+        char *argv[2];
+        argv[0] = token;
+        argv[1] = strtok(NULL, "");
+        status = mysh_external(2,argv);
     }
 }
 
