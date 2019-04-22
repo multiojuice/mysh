@@ -31,11 +31,12 @@ int mysh_external(int argc, char *argv[]) {
     pid_t pid = fork();
     int status = 0;
     if(pid == 0) {
+        printf("execvp: %s\n", argv[0]);
+
         status = execlp(argv[0], argv[0], argv[1], (char *)NULL);
-        printf("Error%d\n", status);
-        perror("Hi: ");
         exit(status);
     } else {
+        printf("wait for pid %d: %s\n", pid, argv[0]);
         wait(NULL);
         if (status == -1) printf("ERROR");
     }
@@ -59,19 +60,41 @@ int mysh_help(int argc, char *argv[]) {
 }
 
 
-int handle_command(History_Queue hq, char *command) {
+int mysh_verbose(char *option, int *verbose) {
+    if (option == NULL) {
+        printf("usage: verbose  on | off\n");
+    } else if(!strncmp(option, "on", strlen(option))) {
+        *verbose = 1;
+    } else if(!strncmp(option, "off", strlen(option))) {
+        *verbose = 0;
+    } else {
+        printf("usage: verbose  on | off\n");
+    }
+    return 1; 
+}
+
+
+int handle_command(History_Queue hq, char *command, int *verbose) {
+    if(*verbose) printf("command: %s\n", command);
+
     char *token = strtok(command, " ");
     int status = 0;
-    if (!strncmp("history", token, strlen(token))) {
+    if (token == NULL) {
+        return 1;
+    } else if (!strncmp("history", token, strlen(token))) {
         status = mysh_history(hq);
 
     } else if (!strncmp("quit", token, strlen(token))) {
         return QUIT;
+
     } else if (!strncmp("help", token, strlen(token))) {
-       mysh_help(0, NULL); 
+        mysh_help(0, NULL);
+    
+    } else if (!strncmp("verbose", token, strlen(token))) {
+        mysh_verbose(trim(strtok(NULL, " ")), verbose);
 
     } else if (token[0] == '!') {
-        long num = strtol(token+1, NULL, 10); 
+        long num = strtol(token+1, NULL, 10);
         status = mysh_bang(hq, num);
 
     } else {
@@ -89,23 +112,37 @@ int main( int argc, char * argv[] ) {
     char *line = NULL;
     size_t length = 0;
     ssize_t nread;
-    
+    int opt;
+    int verbose = 0;
+    int history = 10;
+
+    while((opt = getopt(argc, argv, "h:v")) != -1) {
+        switch (opt) {
+            case 'v':
+                verbose = 1;
+                break;
+            case 'h':
+                history = (int) strtol(optarg, NULL, 10);
+                break;
+        }
+    }
+ 
 
     // TODO implement the flags
     History_Queue hq = NULL; 
-    
+ 
 
     printf("mysh[0]> ");
     while (nread = getline(&line, &length, stdin) != -1) {
         char *trimmed = trim(line);
 
         if(hq == NULL) {
-            hq = hq_create(10, 0, trimmed);
+            hq = hq_create(history, 0, trimmed);
         } else {
             hq = hq_add(hq, trimmed);
         }
 
-        int status = handle_command(hq, trimmed);
+        int status = handle_command(hq, trimmed, &verbose);
 
         if(status == QUIT) {
             free(trimmed);   
