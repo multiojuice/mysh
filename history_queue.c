@@ -1,9 +1,13 @@
+/// Author Owen Sullivan
+/// File history_queue.c
+/// An implemntation of a modified queue
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "history_queue.h"
 
 
+// Creates the queue for the history queue
 History_Queue hq_create(size_t max_size, size_t current_index, char *command) {
     History_Queue hq = malloc(sizeof(struct History_Queue_S));
 
@@ -19,12 +23,14 @@ History_Queue hq_create(size_t max_size, size_t current_index, char *command) {
 }
 
 
+// Frees a single node
 void hq_free_node(History_Queue hq) {
     free(hq->command);
     free(hq);   
 }
 
 
+// Finds a command based on the index
 char *hq_find_command(History_Queue hq, long index) {
     History_Queue curr = hq;
 
@@ -37,7 +43,7 @@ char *hq_find_command(History_Queue hq, long index) {
     }
 }
 
-
+// Adds a new command to the queue and deletes old ones if too many
 History_Queue hq_add(History_Queue hq, char *command) {
     History_Queue new_hq = hq_create(hq->max_size, hq->last->current_index + 1, command);
 
@@ -62,6 +68,7 @@ History_Queue hq_add(History_Queue hq, char *command) {
     return hq;
 }
 
+// Frees all malloced data in the strucutre
 void hq_free_all(History_Queue hq) {
     History_Queue curr = hq;
 
@@ -72,6 +79,8 @@ void hq_free_all(History_Queue hq) {
     }
 }
 
+
+// prints the queue in an orginized order
 void hq_print(History_Queue hq) {
     History_Queue curr = hq;
 
@@ -82,6 +91,8 @@ void hq_print(History_Queue hq) {
     }
 }
 
+
+// Simple test function
 int test(void) {
     History_Queue hq = hq_create(5, 0, "Command1");
     hq_add(hq, "Command2");

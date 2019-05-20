@@ -1,3 +1,7 @@
+/// Author Owen Sullivan
+/// File mysh.c
+/// An implementation of a simple shell
+
 #include <errno.h> // errno
 #include <stdio.h> // printf
 #include <string.h> //strtok, strcmp
@@ -7,15 +11,17 @@
 #include "trimit.h" // trim function
 #include "history_queue.h" // all history queue functions and struct
 
+#define _DEFAULT_SOURCE
 #define QUIT 88
 
 
+// prints out the history project
 int mysh_history(History_Queue hq) {
     hq_print(hq);
     return 1;
 }
 
-
+// Executes a command from the history
 int mysh_bang(History_Queue hq, long num) {
     long low_index = hq->current_index;
     long high_index = hq->last->current_index;
@@ -27,22 +33,25 @@ int mysh_bang(History_Queue hq, long num) {
 }
 
 
-int mysh_external(int argc, char *argv[]) {
+// This is the process that starts a new process and has the parent
+// wait on the child to finish. Prints error and returns status
+int mysh_external(int argc, char *argv[], int *verbose) {
     pid_t pid = fork();
     int status = 0;
     if(pid == 0) {
-        printf("execvp: %s\n", argv[0]);
+        if(*verbose) printf("execvp: %s\n", argv[0]);
 
         status = execlp(argv[0], argv[0], argv[1], (char *)NULL);
+        if (status) perror("Error: ");
         exit(status);
     } else {
-        printf("wait for pid %d: %s\n", pid, argv[0]);
+        if(*verbose) printf("wait for pid %d: %s\n", pid, argv[0]);
         wait(NULL);
-        if (status == -1) printf("ERROR");
     }
 }
 
 
+// this function prints out the help message
 int mysh_help(int argc, char *argv[]) {
     printf("Welcome to mysh(ell)\n\nInternal Commands: \
     \n\thelp             - displays information about mysh and its functionality \
@@ -59,21 +68,25 @@ int mysh_help(int argc, char *argv[]) {
 
 }
 
-
+// This toggles the verbose mode or prints an error
 int mysh_verbose(char *option, int *verbose) {
     if (option == NULL) {
         printf("usage: verbose  on | off\n");
+        return 2;
     } else if(!strncmp(option, "on", strlen(option))) {
         *verbose = 1;
     } else if(!strncmp(option, "off", strlen(option))) {
         *verbose = 0;
     } else {
         printf("usage: verbose  on | off\n");
+        return 2;
     }
     return 1; 
 }
 
 
+// This is the general function that parses the command
+// And then sends it to the correct funtion to run
 int handle_command(History_Queue hq, char *command, int *verbose) {
     if(*verbose) printf("command: %s\n", command);
 
@@ -81,17 +94,17 @@ int handle_command(History_Queue hq, char *command, int *verbose) {
     int status = 0;
     if (token == NULL) {
         return 1;
-    } else if (!strncmp("history", token, strlen(token))) {
+    } else if (!strcmp("history", token)) {
         status = mysh_history(hq);
 
-    } else if (!strncmp("quit", token, strlen(token))) {
+    } else if (!strcmp("quit", token)) {
         return QUIT;
 
-    } else if (!strncmp("help", token, strlen(token))) {
-        mysh_help(0, NULL);
+    } else if (!strcmp("help", token)) {
+        status = mysh_help(0, NULL);
     
     } else if (!strncmp("verbose", token, strlen(token))) {
-        mysh_verbose(trim(strtok(NULL, " ")), verbose);
+        status = mysh_verbose(trim(strtok(NULL, " ")), verbose);
 
     } else if (token[0] == '!') {
         long num = strtol(token+1, NULL, 10);
@@ -101,12 +114,15 @@ int handle_command(History_Queue hq, char *command, int *verbose) {
         char *argv[2];
         argv[0] = token;
         argv[1] = strtok(NULL, "");
-        status = mysh_external(2,argv);
+        status = mysh_external(2,argv, verbose);
     }
-
+    
+    if(*verbose) printf("command status: %d\n", status);
 }
 
 
+// Controls the main loop of the shell
+// Changes things based on the input flags
 int main( int argc, char * argv[] ) {
     int should_continue = 1;
     char *line = NULL;
